@@ -1,0 +1,41 @@
+{
+  "name": "@btl/ical-events",
+  "version": "1.0.0",
+  "description": "A RFC5545 compliant parser for iCalendar VEVENT with time zone support and accurate recurring events generation.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baptiste00001/iCalEvents.git"
+  },
+  "keywords": [
+    "iCalendar",
+    "RFC5545",
+    "parser",
+    "VEVENT",
+    "event",
+    "TZID",
+    "timezone",
+    "RRULE",
+    "recurrence",
+    "RDATE",
+    "EXDATE"
+  ],
+  "author": "btl",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baptiste00001/iCalEvents/issues"
+  },
+  "homepage": "https://github.com/baptiste00001/iCalEvents#readme",
+  "type": "module",
+  "dependencies": {
+    "luxon": "^3.5.0"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.4.2",
+    "@types/node": "^22.5.5",
+    "eslint": "^9.10.0",
+    "typescript": "^5.6.2"
+  }
+}
