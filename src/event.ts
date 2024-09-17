@@ -1,12 +1,11 @@
-import { UUID } from "crypto";
+import { DateTime } from 'luxon'
 
-//Model
 export type Event = {
-    uuid?: UUID,
-    dtStart: string,
-    dtEnd?: string,
+    uid?: string,
+    dtstart: DateTime,
+    dtend?: DateTime,
     summary?: string,
     location?: string,
     description?: string,
-    calendarID?: UUID,// to which calendar this event belongs to
+    allday?: boolean,
 }

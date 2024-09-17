@@ -1,12 +1,11 @@
 import { DateTime, Duration, Interval } from 'luxon'
-import { RRule } from './rrule'
-import { parseICalDateTime } from './parse-ical-datetime'
-import { parseICalPeriod } from './parse-ical-period'
-import { UUID } from 'crypto'
-import { Event } from './event'
+import { RRule } from './rrule.js'
+import { parseICalDateTime } from './parse-ical-datetime.js'
+import { parseICalPeriod } from './parse-ical-period.js'
+import { Event } from './event.js'
 
 export class VEvent {
-  uuid?: UUID
+  uid?: string
   dtstart?: DateTime
   dtend?: DateTime
   duration?: Duration
@@ -16,9 +15,8 @@ export class VEvent {
   rrule?: RRule
   rdates: (DateTime | Interval)[] = []
   exdates: DateTime[] = []
-  calendarID: UUID
 
-  constructor(eventData: string, calendarID: UUID) {
+  constructor(eventData: string) {
     
     const lines = eventData.split('\n')
 
@@ -44,8 +42,6 @@ export class VEvent {
     if (currentLine) this.parseEventLine(currentLine)
     
     if(this.dtstart === undefined) throw new Error(`VEvent constructor: couldn't parse start date: \n ${eventData}`)
-  
-    this.calendarID = calendarID
   }
 
   private parseEventLine(line: string) {
@@ -94,7 +90,7 @@ export class VEvent {
   }
   
     if(lineUC.startsWith("UID")) {
-        this.uuid = line.split(":")[1] as UUID
+        this.uid = line.split(":")[1]
         return
     }
   
@@ -144,7 +140,7 @@ export class VEvent {
   toString(): string {
 
     return `
-      uuid: ${this.uuid} \n
+      uuid: ${this.uid} \n
       dtstart: ${this.dtstart?.toSQLString()} \n
       dtend: ${this.dtend?.toSQLString()} \n
       duration: ${this.duration?.toString()} \n
@@ -162,7 +158,6 @@ export class VEvent {
         }).reduce((p,c): string=> {return p +((p === "") ? "" : ",")+ c},"")
       } \n
       exdate: ${(this.exdates).map<string>((i:DateTime): string=>{return i.toSQLString() ?? ""}).reduce((p,c): string=> {return p +((p === "") ? "" : ",")+ c},"")} \n
-      calendarID: ${this.calendarID}
       `
   }
 
@@ -187,13 +182,13 @@ export class VEvent {
     endDate.isDate = this.dtstart.isDate
     
     return  {
-      uuid: this.uuid,
-      dtStart: newStartDate.toSQLString(),
-      dtEnd: endDate.toSQLString(),
+      uid: this.uid,
+      dtstart: newStartDate,
+      dtend: endDate,
       summary: this.summary,
       location: this.location,
       description: this.description,
-      calendarID: this.calendarID
+      allday: this.dtstart.isDate
     } as Event
   }
 
@@ -288,7 +283,7 @@ export class VEvent {
 
   }
 
-  isExcluded(startDateTime: DateTime): boolean {
+  private isExcluded(startDateTime: DateTime): boolean {
     return (this.exdates.some((exdate: DateTime) => exdate.valueOf() === startDateTime.valueOf()))
   }
 }

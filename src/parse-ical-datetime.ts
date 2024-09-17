@@ -1,7 +1,5 @@
 import { DateTime } from 'luxon'
 
-//TODO: 'local' time zone must be the time zone of the client, not the server's one !!
-//TODO: display the dates in the time zone set in the BISettings or the one of the client ??
 export function parseICalDateTime(line: string): DateTime[] {
       
   let dateTimeList: DateTime[] = []
@@ -15,7 +13,7 @@ export function parseICalDateTime(line: string): DateTime[] {
     if(parts.length < 2) throw new Error(`parseICalDateTime: Invalid DateTime ${line}`)
 
     // UNTIL can have only 1 value
-    dateTimeList.push(parseDateString(parts[1], null))
+    dateTimeList.push(parseDateString(parts[1]))
       
   } else if(line.includes(":")) {
     // Case DTSTART;TZID=Asia/Tokyo:20201027T163000 or DTSTART:20201027T163000 or DTSTART:20201027T163000Z
@@ -28,12 +26,10 @@ export function parseICalDateTime(line: string): DateTime[] {
     if(parts.length < 2) throw new Error(`parseICalDateTime: Invalid DateTime ${line}`)
 
 
-    let tzid: string | null = null
+    let tzid: string | undefined = process.env.ICALEVENTS_LOCAL_TZ
     if (parts[0].replace(/tzid/,"TZID").includes("TZID=")) {
       tzid = parts[0].split("TZID=")[1].split(";")[0].split(":")[0].trim()
     }
-
-    //DTSTART;TZID=America/New_York:20070115T090000
 
     // Multiple values separated by ","
     parts[1].split(",").forEach( (dateString: string): void => {
@@ -50,7 +46,7 @@ export function parseICalDateTime(line: string): DateTime[] {
   return dateTimeList
 }
 
-export function parseDateString(dateString: string, tzid: string | null): DateTime {
+export function parseDateString(dateString: string, tzid?: string): DateTime {
   
   let dateStringTrimmed: string = dateString.trim().toUpperCase()
 

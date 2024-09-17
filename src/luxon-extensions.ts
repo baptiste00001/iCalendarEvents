@@ -15,13 +15,14 @@ declare module 'luxon' {
 }
 
 DateTime.prototype.toSQLString = function(): string | null {
-  //const _self = this as DateTime;
   if(this.isDate) {
       return this.toSQLDate()
   } else {
       return this.toSQL({ includeZone: true })
   }
 }
+
+
 
 DateTime.prototype.setSmallUnits = function(from: DateTime, upTo: DateTimeUnit): DateTime {
   

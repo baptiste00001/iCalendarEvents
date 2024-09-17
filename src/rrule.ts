@@ -1,9 +1,9 @@
 import { DateTime, DateTimeUnit } from "luxon"
-import { parseICalDateTime } from './parse-ical-datetime'
+import { parseICalDateTime } from './parse-ical-datetime.js'
 
-type Freq = "SECONDLY" | "MINUTELY" | "HOURLY" | "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY"
-type Weekday = "MO" | "TU" | "WE" | "TH" | "FR" | "SA" | "SU"
-type WeekdayNum = {
+export type Freq = "SECONDLY" | "MINUTELY" | "HOURLY" | "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY"
+export type Weekday = "MO" | "TU" | "WE" | "TH" | "FR" | "SA" | "SU"
+export type WeekdayNum = {
   nth: number | null, // (-5 to 5 - {0})
   weekday: Weekday
 }
@@ -302,10 +302,6 @@ export class RRule {
     return true
   }
 
-  
-
-  
-
   advanceDate(from: DateTime): DateTime {
     // TODO: optimize to skip values when possible
 
@@ -345,7 +341,7 @@ export class RRule {
     
   }
 
-  getAdvanceFreq(): Freq {
+  private getAdvanceFreq(): Freq {
     // Returns the frequency to be used in advanceDate
     // Useful when handling BYSETPOS
 
@@ -366,7 +362,7 @@ export class RRule {
     }
   }
 
-  unitsCap(freq: Freq): DateTimeUnit {
+  private unitsCap(freq: Freq): DateTimeUnit {
 
     const map: { [key: string]: DateTimeUnit } = {
       SECONDLY: 'millisecond', 
@@ -381,7 +377,7 @@ export class RRule {
     return map[freq]
   }
 
-  adjustLocaleForWkst(dateTime: DateTime): DateTime | null {
+  private adjustLocaleForWkst(dateTime: DateTime): DateTime | null {
     // return a new DateTime object with a locale in which wkst is appropriate
     // only cover case where week start is on monday, sunday or saturday
     let dateTimeInLocale: DateTime 

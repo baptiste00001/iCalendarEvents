@@ -1,5 +1,5 @@
 import { DateTime, Duration, Interval } from 'luxon'
-import { parseDateString } from './parse-ical-datetime'
+import { parseDateString } from './parse-ical-datetime.js'
 
 
 export function parseICalPeriod(line: string): Interval[] {
@@ -17,7 +17,7 @@ export function parseICalPeriod(line: string): Interval[] {
     const parts: string[] = line.split(":")
       if(parts.length < 2) throw new Error(`parseICalDateTime: Invalid DateTime ${line}`)
 
-      let tzid: string | null = null
+      let tzid: string | undefined = process.env.ICALEVENTS_LOCAL_TZ
       const firstPartUC: string = parts[0].replace(/tzid/,"TZID")
       if (firstPartUC.includes("TZID=")) {
         tzid = firstPartUC.split("TZID=")[1].split(";")[0].split(":")[0].trim()
@@ -39,7 +39,7 @@ export function parseICalPeriod(line: string): Interval[] {
   return intervalList
 }
 
-function parsePeriodString(periodString: string, tzid: string | null): Interval {
+function parsePeriodString(periodString: string, tzid?: string): Interval {
   if(!periodString.includes("/")) throw new Error(`parsePeriodString: period could not be parsed: ${periodString}`)
 
   const parts: string[] = periodString.split("/")
