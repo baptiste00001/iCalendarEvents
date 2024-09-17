@@ -1,7 +1,7 @@
 # iCalEvents
 A RFC5545 compliant parser for iCalendar VEVENT with time zone support and accurate recurring events generation.
 
-`
+```
 import { ICalEvents } from '@bt.l/ical-events'
 import { DateTime, Interval } from 'luxon'
 
@@ -34,4 +34,4 @@ const iCalEvents = new ICalEvents(data, range, {withVEvent: true})
 console.log(iCalEvents.days)
 
 console.log(iCalEvents.vevents.toString())
-`
+```
