@@ -18,13 +18,20 @@ Teminal
 ```
 mkdir test-ical-events
 cd test-ical-events
+```
+
+```
 npm init -y
 npm install luxon ical-events
 npm install --save-dev typescript @types/luxon
 ```
 
-In your node project:
-src/index.ts
+```
+mkdir src
+nano src/index.ts
+```
+
+Add this code to 'src/index.ts'
 ```
 import { ICalEvents } from 'ical-events'
 import { DateTime, Interval } from 'luxon'
@@ -66,7 +73,12 @@ console.log(iCalEvents.events)
 Compile typescript file using your prefered build system and run your code.
 for example:
 
-tsconfig.json
+In your project root folder
+```
+nano tsconfig.json
+```
+
+Add this code to 'tsconfig.json'
 ```
 {
   "compilerOptions": {
@@ -91,8 +103,100 @@ tsconfig.json
 }
 ```
 
+Compile and run:
 Terminal
 ```
 npx tsc && node ./dist/index.js
 ```
 
+You get the list of events that correspond to the iCalendar file given as an example.
+Terminal
+```
+> npx tsc && node ./dist/index.js
+
+
+      uuid: 172a399f-b2c6-44e4-9b06-9c70356dabd2 
+
+      dtstart: 2024-10-05 09:00:00.000 America/New_York 
+
+      dtend: undefined 
+
+      duration: PT1H 
+
+      summary: test event 
+
+      location: loc 
+
+      description: desc 
+
+      rrule:  
+         freq: MONTHLY  
+         until: undefined    
+         count: 5    
+         interval: 1 
+         bysecond:  
+         byminute:  
+         byhour:    
+         byday: [{"nth":-1,"weekday":"FR"},{"nth":-1,"weekday":"SA"},{"nth":-1,"weekday":"SU"}]    
+         bymonthday: []   
+         byyearday: []    
+         byweekno: [] 
+         bymonth: []  
+         bysetpos: [] 
+         wkst: "MO"        
+
+      rdate:  
+
+      exdate:  
+
+      
+2024-10-01T00:00:00.000-04:00/2024-12-31T23:59:59.999-05:00
+[
+  {
+    uid: '172a399f-b2c6-44e4-9b06-9c70356dabd2',
+    dtstart: DateTime { ts: 2024-10-25T09:00:00.000-04:00, zone: America/New_York, locale: en-US },
+    dtend: DateTime { ts: 2024-10-25T10:00:00.000-04:00, zone: America/New_York, locale: en-US },
+    summary: 'test event',
+    location: 'loc',
+    description: 'desc',
+    allday: false
+  },
+  {
+    uid: '172a399f-b2c6-44e4-9b06-9c70356dabd2',
+    dtstart: DateTime { ts: 2024-10-26T09:00:00.000-04:00, zone: America/New_York, locale: en-US },
+    dtend: DateTime { ts: 2024-10-26T10:00:00.000-04:00, zone: America/New_York, locale: en-US },
+    summary: 'test event',
+    location: 'loc',
+    description: 'desc',
+    allday: false
+  },
+  {
+    uid: '172a399f-b2c6-44e4-9b06-9c70356dabd2',
+    dtstart: DateTime { ts: 2024-10-27T09:00:00.000-04:00, zone: America/New_York, locale: en-US },
+    dtend: DateTime { ts: 2024-10-27T10:00:00.000-04:00, zone: America/New_York, locale: en-US },
+    summary: 'test event',
+    location: 'loc',
+    description: 'desc',
+    allday: false
+  },
+  {
+    uid: '172a399f-b2c6-44e4-9b06-9c70356dabd2',
+    dtstart: DateTime { ts: 2024-11-24T09:00:00.000-05:00, zone: America/New_York, locale: en-US },
+    dtend: DateTime { ts: 2024-11-24T10:00:00.000-05:00, zone: America/New_York, locale: en-US },
+    summary: 'test event',
+    location: 'loc',
+    description: 'desc',
+    allday: false
+  },
+  {
+    uid: '172a399f-b2c6-44e4-9b06-9c70356dabd2',
+    dtstart: DateTime { ts: 2024-11-29T09:00:00.000-05:00, zone: America/New_York, locale: en-US },
+    dtend: DateTime { ts: 2024-11-29T10:00:00.000-05:00, zone: America/New_York, locale: en-US },
+    summary: 'test event',
+    location: 'loc',
+    description: 'desc',
+    allday: false
+  }
+]
+
+```
