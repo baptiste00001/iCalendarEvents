@@ -28,9 +28,9 @@
   "author": "Baptiste L",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/baptiste00001/iCalEvents/issues"
+    "url": "https://github.com/baptiste00001/iCalendarEvents/issues"
   },
-  "homepage": "https://github.com/baptiste00001/iCalEvents#readme",
+  "homepage": "https://github.com/baptiste00001/iCalendarEvents#readme",
   "type": "module",
   "dependencies": {
     "luxon": "^3.5.0"
