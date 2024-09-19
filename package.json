@@ -1,5 +1,5 @@
 {
-  "name": "@bt.l/ical-events",
+  "name": "ical-events",
   "version": "1.0.0",
   "description": "A RFC5545 compliant parser for iCalendar VEVENT with time zone support and accurate recurring events generation.",
   "main": "dist/index.js",
@@ -25,7 +25,7 @@
     "RDATE",
     "EXDATE"
   ],
-  "author": "bt.l",
+  "author": "Baptiste L",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/baptiste00001/iCalEvents/issues"

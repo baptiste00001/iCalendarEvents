@@ -7,15 +7,22 @@ export type iCalParserOptions = {
   // return the raw list of parsed VEVENTs too
   withVEvent?: boolean, 
 
-  // client's local time zone to use instead of 'local'. 
-  // 'local' would be the time zone of the server where the code is running.
+  // client's local time zone to use instead of 'local'
+  // because 'local' is the time zone of the server where the code is running.
   // e.g. 'America/New_York'
   localTZ?: string, 
+
+  // always include DTSTART in the recurrence set even if it does not match RRULE.
+  // it can still be excluded by EXDATE.
+  includeDTSTART?: boolean,
 }
 
 export class ICalEvents {
-  // All Events in the given date range sorted by day and with reccurence occurences expanded.
+  // All Events in the given date range sorted by day and with reccurence expanded.
   days: Map<string, Event[]>
+
+  // All Events in the given date range with reccurence expanded
+  events: Event[]
 
   // Optional raw list of vevents. For debugging purpose mostly.
   vevents: VEvent[] = []
@@ -76,7 +83,7 @@ export class ICalEvents {
           if(options?.withVEvent) this.vevents.push(vevent)
 
           // Add recurring events that fall in the range
-          let allEvents: Event[] = vevent.expandRecurrence(range)
+          let allEvents: Event[] = vevent.expandRecurrence(range, options?.includeDTSTART)
 
           // push the events into this.days
           for(const event of allEvents) {
@@ -91,6 +98,14 @@ export class ICalEvents {
           }
         }
       }
-    })       
+    }) 
+    
+    this.events = []
+
+    this.days.forEach((value, key) => {
+      value.forEach(event => {
+        this.events.push(event)
+      })
+    })
   }
 }

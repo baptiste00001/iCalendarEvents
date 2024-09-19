@@ -188,7 +188,7 @@ export class VEvent {
       summary: this.summary,
       location: this.location,
       description: this.description,
-      allday: this.dtstart.isDate
+      allday: this.dtstart.isDate ?? false
     } as Event
   }
 
@@ -197,7 +197,7 @@ export class VEvent {
   //2. Do not include start dates that are in EXDATE.
   //3. Build events from the list of start dates, and using the duration in the original event 
   // duration = (DTEND - DTSTART) or (DURATION) or (RDATE if period)
-  expandRecurrence ( range: Interval ) : Event[] {
+  expandRecurrence ( range: Interval, includeDTSTART: boolean = false ) : Event[] {
 
     const events: Event[] = []
 
@@ -205,12 +205,14 @@ export class VEvent {
 
     // Add DTSTART into the set
     if(range.contains(this.dtstart) && !this.isExcluded(this.dtstart)) {
-      const event: Event | null = this.toEvent(this.dtstart)
-      
-      if(event === null) {
-        console.error("VEvent expandRecurrence: event could not be created from start date")
-      } else {
-        events.push(event)
+      if (includeDTSTART || !this.rrule || this.rrule.matchesRRule(this.dtstart)) {
+        const event: Event | null = this.toEvent(this.dtstart)
+        
+        if(event === null) {
+          console.error("VEvent expandRecurrence: event could not be created from start date")
+        } else {
+          events.push(event)
+        }
       }
     }
 
