@@ -1,4 +1,4 @@
-# iCalEvents
+# iCalendarEvents
 A RFC5545 compliant parser for iCalendar VEVENT with time zone support and accurate recurring events generation.
 
 The Goal of this package is to provide a most accurate parsing that sticks 100% to the RFC5545 specifications, and that handles time zones in any situation perfectly without using any hack (e.g. put everything in UTC).
@@ -33,7 +33,7 @@ nano src/index.ts
 
 Add this code to 'src/index.ts'
 ```
-import { ICalEvents } from 'ical-events'
+import { ICalEvents } from 'icalendar-events'
 import { DateTime, Interval } from 'luxon'
 
 // Get the iCalendar data from an url (using fetch) or from a file (using fs)
