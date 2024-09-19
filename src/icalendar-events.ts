@@ -17,7 +17,7 @@ export type iCalParserOptions = {
   includeDTSTART?: boolean,
 }
 
-export class ICalEvents {
+export class ICalendarEvents {
   // All Events in the given date range sorted by day and with reccurence expanded.
   days: Map<string, Event[]>
 

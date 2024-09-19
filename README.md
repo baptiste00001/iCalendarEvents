@@ -33,7 +33,7 @@ nano src/index.ts
 
 Add this code to 'src/index.ts'
 ```
-import { ICalEvents } from 'icalendar-events'
+import { ICalendarEvents } from 'icalendar-events'
 import { DateTime, Interval } from 'luxon'
 
 // Get the iCalendar data from an url (using fetch) or from a file (using fs)
@@ -61,13 +61,13 @@ const firstDate: DateTime = DateTime.fromFormat("20241005T090000", "yyyyMMdd'T'H
 const lastDate: DateTime = firstDate.plus({months:2}).endOf('month')
 const range = Interval.fromDateTimes(firstDate, lastDate)
 
-const iCalEvents = new ICalEvents(data, range, {withVEvent: true, includeDTSTART: false})
+const iCalendarEvents = new ICalendarEvents(data, range, {withVEvent: true, includeDTSTART: false})
 
-console.log(iCalEvents.vevents.toString())
+console.log(iCalendarEvents.vevents.toString())
 
 console.log(range.toISO())
 
-console.log(iCalEvents.events)
+console.log(iCalendarEvents.events)
 ```
 
 Compile typescript file using your prefered build system and run your code.
