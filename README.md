@@ -18,15 +18,9 @@ Teminal
 ```
 mkdir test-ical-events
 cd test-ical-events
-```
-
-```
-npm init -y
-npm install luxon ical-events
+npm init -y esnext
+npm install icalendar-events
 npm install --save-dev typescript @types/luxon
-```
-
-```
 mkdir src
 nano src/index.ts
 ```
