@@ -18,13 +18,10 @@ export type iCalParserOptions = {
 }
 
 export class ICalendarEvents {
-  // All Events in the given date range sorted by day and with reccurence expanded.
-  days: Map<string, Event[]>
-
-  // All Events in the given date range with reccurence expanded
+  // All Events in the given date range sorted, with reccurence expanded
   events: Event[]
 
-  // Optional raw list of vevents. For debugging purpose mostly.
+  // Optional raw list of vevents sorted. For debugging purpose mostly.
   vevents: VEvent[] = []
 
 
@@ -46,23 +43,9 @@ export class ICalendarEvents {
 
     if(!range || !range.isValid) throw new Error(`ICalEvents constructor: range is invalid: ${range.invalidReason}`)
 
-    // Create map<string, Event[]> with dates (keys) initialized/sorted, and empty values
-    this.days = new Map<string, Event[]>()
+    this.events = []
 
-    // Pre-set the keys to have them in order
-    const start: DateTime | null = range.start
-    if(start === null) throw new Error(`ICalEvents constructor: could not get the start of range`)
-    
-    let currentDate: DateTime = start
-    while(range.contains(currentDate)) {
-      const dateString: string | null = currentDate.toISODate()
-      if(dateString !== null) {
-        this.days.set(dateString, [])
-      }
-      currentDate = currentDate.plus({days: 1})
-    }
-
-    // Then add the events as they are parsed
+    // Add the events as they are parsed
     // We don't read the VTIMEZONE, instead we just use the standard Olson TZID
     const eventsData: string[] = data.split('BEGIN:VEVENT')
     eventsData.forEach((eventData) => {
@@ -85,27 +68,19 @@ export class ICalendarEvents {
           // Add recurring events that fall in the range
           let allEvents: Event[] = vevent.expandRecurrence(range, options?.includeDTSTART)
 
-          // push the events into this.days
-          for(const event of allEvents) {
-            const dateString: string = event.dtstart.toISODate() ?? ""
-            
-            if(!this.days.has(dateString)) {
-              console.error(`ICalEvents constructor: key=${dateString} undefined in the map`)
-              return
-            }
-
-            this.days.get(dateString)?.push(event)    
-          }
+          this.events.push(...allEvents)
         }
       }
     }) 
-    
-    this.events = []
 
-    this.days.forEach((value, key) => {
-      value.forEach(event => {
-        this.events.push(event)
-      })
+    this.vevents.sort((vevent1, vevent2) => {
+      if(vevent1.dtstart === undefined || vevent2.dtstart === undefined) return 0
+
+      return vevent1.dtstart.valueOf() - vevent2.dtstart.valueOf()
+    })
+
+    this.events.sort((event1, event2) => {
+      return event1.dtstart.valueOf() - event2.dtstart.valueOf()
     })
   }
 }
