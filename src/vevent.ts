@@ -2,7 +2,7 @@ import { DateTime, Duration, Interval } from 'luxon'
 import { RRule } from './rrule.js'
 import { parseICalDateTime } from './parse-ical-datetime.js'
 import { parseICalPeriod } from './parse-ical-period.js'
-import { Event } from './event.js'
+import { ICEvent } from './icevent.js'
 
 export class VEvent {
   uid?: string
@@ -163,7 +163,7 @@ export class VEvent {
 
   // create corresponding event calculating the appropriate end time using original event duration
   // period is for the case RDATE is a period, we use that duraiton instead
-  private toEvent(newStartDate: DateTime, period?: Duration | null): Event | null {
+  private toEvent(newStartDate: DateTime, period?: Duration | null): ICEvent | null {
     if(this.dtstart === undefined) return null
 
     let endDate: DateTime | null = null
@@ -189,7 +189,7 @@ export class VEvent {
       location: this.location,
       description: this.description,
       allday: this.dtstart.isDate ?? false
-    } as Event
+    } as ICEvent
   }
 
   // Method to expand recurrence rules and generate all event occurrences
@@ -197,16 +197,16 @@ export class VEvent {
   //2. Do not include start dates that are in EXDATE.
   //3. Build events from the list of start dates, and using the duration in the original event 
   // duration = (DTEND - DTSTART) or (DURATION) or (RDATE if period)
-  expandRecurrence ( range: Interval, includeDTSTART: boolean = false ) : Event[] {
+  expandRecurrence ( range: Interval, includeDTSTART: boolean = false ) : ICEvent[] {
 
-    const events: Event[] = []
+    const events: ICEvent[] = []
 
     if(this.dtstart === undefined || range.isBefore(this.dtstart)) return events
 
     // Add DTSTART into the set
     if(range.contains(this.dtstart) && !this.isExcluded(this.dtstart)) {
       if (includeDTSTART || !this.rrule || this.rrule.matchesRRule(this.dtstart)) {
-        const event: Event | null = this.toEvent(this.dtstart)
+        const event: ICEvent | null = this.toEvent(this.dtstart)
         
         if(event === null) {
           console.error("VEvent expandRecurrence: event could not be created from start date")
@@ -239,7 +239,7 @@ export class VEvent {
       while ((until === null || currentDateTime <= until) && (count === null || events.length < count) && range.contains(currentDateTime)) {
         if (!this.isExcluded(currentDateTime)) {
           if (this.rrule.matchesRRule(currentDateTime)) {
-            const event: Event | null = this.toEvent(currentDateTime)
+            const event: ICEvent | null = this.toEvent(currentDateTime)
             if(event === null) {
               console.error("VEvent expandRecurrence: event could not be created from new start date")
             } else {
@@ -271,7 +271,7 @@ export class VEvent {
       if (!this.isExcluded(rdateStartDate)) {
         const duration: Duration | null = (rdate instanceof Interval) ? rdate.toDuration() : null
 
-        const event: Event | null = this.toEvent(rdateStartDate, duration)
+        const event: ICEvent | null = this.toEvent(rdateStartDate, duration)
         if(event === null) {
           console.error("expandRecurrence: event could not be created from RDATE")
         }

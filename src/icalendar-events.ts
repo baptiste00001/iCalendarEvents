@@ -1,4 +1,4 @@
-import { type Event}  from './event.js'
+import { type ICEvent}  from './icevent.js'
 import { DateTime, Interval } from 'luxon'
 import { VEvent } from './vevent.js'
 import './luxon-extensions.js'
@@ -19,7 +19,7 @@ export type iCalParserOptions = {
 
 export class ICalendarEvents {
   // All Events in the given date range sorted, with reccurence expanded
-  events: Event[]
+  events: ICEvent[]
 
   // Optional raw list of vevents sorted. For debugging purpose mostly.
   vevents: VEvent[] = []
@@ -66,7 +66,7 @@ export class ICalendarEvents {
           if(options?.withVEvent) this.vevents.push(vevent)
 
           // Add recurring events that fall in the range
-          let allEvents: Event[] = vevent.expandRecurrence(range, options?.includeDTSTART)
+          let allEvents: ICEvent[] = vevent.expandRecurrence(range, options?.includeDTSTART)
 
           this.events.push(...allEvents)
         }

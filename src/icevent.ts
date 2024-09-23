@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 
-export type Event = {
+export type ICEvent = {
     uid?: string,
     dtstart: DateTime,
     dtend?: DateTime,
