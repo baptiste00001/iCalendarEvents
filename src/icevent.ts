@@ -8,4 +8,5 @@ export type ICEvent = {
     location?: string,
     description?: string,
     allday?: boolean,
+    transp?: string,
 }

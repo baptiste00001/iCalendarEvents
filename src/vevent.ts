@@ -15,6 +15,7 @@ export class VEvent {
   rrule?: RRule
   rdates: (DateTime | Interval)[] = []
   exdates: DateTime[] = []
+  transp?: string
 
   constructor(eventData: string) {
     
@@ -135,6 +136,10 @@ export class VEvent {
         }
         return
     }
+
+    if(lineUC.startsWith("TRANSP")) {
+      this.transp = line.split(":")[1]
+    }
   }
 
   toString(): string {
@@ -188,7 +193,8 @@ export class VEvent {
       summary: this.summary,
       location: this.location,
       description: this.description,
-      allday: this.dtstart.isDate ?? false
+      allday: this.dtstart.isDate ?? false,
+      transp: this.transp
     } as ICEvent
   }
 
