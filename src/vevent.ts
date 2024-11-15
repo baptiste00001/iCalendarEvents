@@ -178,8 +178,8 @@ export class VEvent {
       endDate = newStartDate.plus(Duration.fromDurationLike(this.dtend.diff(this.dtstart)))
     } else if (this.duration !== undefined) {
       endDate = newStartDate.plus(this.duration)
-    } else { // case there is neither DTEND nor DURATION then event is 1 day by default
-      endDate = this.dtstart.plus({days: 1})
+    } else { // case there is neither DTEND nor DURATION then event duration is 1 day by default
+      endDate = newStartDate.plus({days: 1})
     }
 
     if(endDate === null || !endDate.isValid) return null

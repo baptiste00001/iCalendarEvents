@@ -1,6 +1,6 @@
 {
   "name": "icalendar-events",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A RFC5545 compliant parser for iCalendar VEVENT with time zone support and accurate recurring events generation.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
