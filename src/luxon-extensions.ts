@@ -3,7 +3,7 @@ import { DateTime, DateTimeUnit, WeekdayNumbers } from 'luxon'
 declare module 'luxon' {
   export interface DateTime {
 
-    isDate: boolean
+    isDate?: boolean
 
     toSQLString(): string | null
 
