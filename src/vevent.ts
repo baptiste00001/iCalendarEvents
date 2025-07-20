@@ -3,6 +3,8 @@ import { RRule } from './rrule.js'
 import { parseICalDateTime } from './parse-ical-datetime.js'
 import { parseICalPeriod } from './parse-ical-period.js'
 import { ICEvent } from './icevent.js'
+import { toSQL } from './utils.js'
+
 
 export class VEvent {
   uid?: string
@@ -146,8 +148,8 @@ export class VEvent {
 
     return `
       uuid: ${this.uid} \n
-      dtstart: ${this.dtstart?.toSQLString()} \n
-      dtend: ${this.dtend?.toSQLString()} \n
+      dtstart: ${this.dtstart ? toSQL(this.dtstart) : ""} \n
+      dtend: ${this.dtend ? toSQL(this.dtend) : ""} \n
       duration: ${this.duration?.toString()} \n
       summary: ${this.summary} \n
       location: ${this.location} \n
@@ -156,13 +158,13 @@ export class VEvent {
       rdate: ${
         (this.rdates).map<string>((rdate: DateTime | Interval): string=>{
           if(rdate instanceof DateTime) {
-            return rdate.toSQLString() ?? ""
+            return toSQL(rdate) ?? ""
           } else {
             return rdate.toISO()
           }
         }).reduce((p,c): string=> {return p +((p === "") ? "" : ",")+ c},"")
       } \n
-      exdate: ${(this.exdates).map<string>((i:DateTime): string=>{return i.toSQLString() ?? ""}).reduce((p,c): string=> {return p +((p === "") ? "" : ",")+ c},"")} \n
+      exdate: ${(this.exdates).map<string>((i:DateTime): string=>{return toSQL(i) ?? ""}).reduce((p,c): string=> {return p +((p === "") ? "" : ",")+ c},"")} \n
       `
   }
 

@@ -1,5 +1,6 @@
 import { DateTime, DateTimeUnit } from "luxon"
 import { parseICalDateTime } from './parse-ical-datetime.js'
+import { toSQL, setSmallUnits, plusUnit } from './utils.js'
 
 export type Freq = "SECONDLY" | "MINUTELY" | "HOURLY" | "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY"
 export type Weekday = "MO" | "TU" | "WE" | "TH" | "FR" | "SA" | "SU"
@@ -276,7 +277,7 @@ export class RRule {
 
       
       const advanceFreq = this.getAdvanceFreq()
-      let dt: DateTime = periodStart.setSmallUnits(dateTime, this.unitsCap(advanceFreq))
+      let dt: DateTime = setSmallUnits(periodStart, dateTime, this.unitsCap(advanceFreq))
 
       while(dt <= periodEnd) {
         if(this.matchesRRule(dt, true)) {
@@ -319,17 +320,17 @@ export class RRule {
     const advanceFreq: Freq = this.getAdvanceFreq()
 
     if(this.freq !== advanceFreq) {
-      next = fromInLocale.plusUnit(mapFreqUnit(advanceFreq), 1)
+      next = plusUnit(fromInLocale, mapFreqUnit(advanceFreq), 1)
 
       if(!next.hasSame(fromInLocale, mapFreqUnit(this.freq), {useLocaleWeeks: true})) {
-        const temp: DateTime = fromInLocale.plusUnit(mapFreqUnit(this.freq), this.interval).startOf(mapFreqUnit(this.freq), {useLocaleWeeks: true})
+        const temp: DateTime = plusUnit(fromInLocale, mapFreqUnit(this.freq), this.interval).startOf(mapFreqUnit(this.freq), {useLocaleWeeks: true})
         const unitLimit: DateTimeUnit = this.unitsCap(this.freq)
-        next = temp.setSmallUnits(fromInLocale, unitLimit)
+        next = setSmallUnits(temp, fromInLocale, unitLimit)
 
       }
         
     } else {
-      next = fromInLocale.plusUnit(mapFreqUnit(this.freq), this.interval)
+      next = plusUnit(fromInLocale, mapFreqUnit(this.freq), this.interval)
     }
 
     if(next === null || !next.isValid) {
@@ -404,7 +405,7 @@ export class RRule {
   toString(): string {
       return ` \n \
         freq: ${this.freq}  \n \
-        until: ${this.until?.toSQLString()}    \n \
+        until: ${this.until ? toSQL(this.until) : ""}    \n \
         count: ${this.count}    \n \
         interval: ${this.interval} \n \
         bysecond: ${this.bysecond.map<string>(i=> i.toString()).reduce((prev, cur): string => {return prev + ((prev === "") ? "" : ",") + cur},"")} \n \
