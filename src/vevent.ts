@@ -180,8 +180,28 @@ export class VEvent {
       endDate = newStartDate.plus(Duration.fromDurationLike(this.dtend.diff(this.dtstart)))
     } else if (this.duration !== undefined) {
       endDate = newStartDate.plus(this.duration)
-    } else { // case there is neither DTEND nor DURATION then event duration is 1 day by default
-      endDate = newStartDate.plus({days: 1})
+    } else { 
+      // case where there is neither DTEND nor DURATION then event duration is 1 day by default.
+      // RFC specifications state: 
+        //   The "DTSTART" property for a "VEVENT" specifies the inclusive
+        // start of the event.  For recurring events, it also specifies the
+        // very first instance in the recurrence set.  The "DTEND" property
+        // for a "VEVENT" calendar component specifies the non-inclusive end
+        // of the event.  ******* For cases where a "VEVENT" calendar component
+        // specifies a "DTSTART" property with a DATE value type but no
+        // "DTEND" nor "DURATION" property, the event's duration is taken to
+        // be one day.  For cases where a "VEVENT" calendar component
+        // specifies a "DTSTART" property with a DATE-TIME value type but no
+        // "DTEND" property, the event ends on the same calendar date and
+        // time of day specified by the "DTSTART" property. *******
+      if(this.dtstart.isDate) {
+        endDate = newStartDate.plus({days: 1})
+      } else {
+        // just add 1 millisecond to the start date instead of 
+        // returning the exact same calendar date and time 
+        // to avoid problems because dtend is non-inclusive
+        endDate = newStartDate.plus({milliseconds: 1})
+      }
     }
 
     if(endDate === null || !endDate.isValid) return null
