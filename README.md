@@ -12,6 +12,8 @@ Please let me know if there are use cases where VTIMEZONE parsing is required.
 
 Any feedback through GitHub - bug report, pull request, code styling and design patterns suggestions - is highly welcome.
 
+As of now RECURRENCE-ID override is not implemented. It will be added soon.
+
 
 ## Usage
 Teminal
