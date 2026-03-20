@@ -9,4 +9,7 @@ export type ICEvent = {
     description?: string,
     allday?: boolean,
     transp?: string,
+    status?: string,
+    recurrenceId?: DateTime,
+    sequence?: number,
 }

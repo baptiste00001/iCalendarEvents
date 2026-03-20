@@ -18,6 +18,9 @@ export class VEvent {
   rdates: (DateTime | Interval)[] = []
   exdates: DateTime[] = []
   transp?: string
+  status?: string
+  recurrenceId?: DateTime
+  sequence?: number
 
   constructor(eventData: string) {
     
@@ -91,6 +94,11 @@ export class VEvent {
       this.location = line.split(":")[1]
       return
   }
+
+    if(lineUC.startsWith("STATUS")) {
+        this.status = line.split(":")[1]
+        return
+    }
   
     if(lineUC.startsWith("UID")) {
         this.uid = line.split(":")[1]
@@ -142,6 +150,27 @@ export class VEvent {
     if(lineUC.startsWith("TRANSP")) {
       this.transp = line.split(":")[1]
     }
+
+    if(lineUC.startsWith("RECURRENCE-ID")) {
+        try {
+            //There is only 1 date in RECURRENCE-ID
+            this.recurrenceId = parseICalDateTime(line)[0]
+        } catch (e: any) {
+            console.error("VEvent", `Could not parse recurrence-id: ${line}`)
+            console.error("VEvent", e)
+        }
+        return
+    }
+
+    if(lineUC.startsWith("SEQUENCE")) {
+        try {
+            this.sequence = parseInt(line.split(":")[1], 10)
+        } catch (e: any) {
+            console.error("VEvent", `Could not parse sequence: ${line}`)
+            console.error("VEvent", e)
+        }
+        return
+    }
   }
 
   toString(): string {
@@ -165,6 +194,10 @@ export class VEvent {
         }).reduce((p,c): string=> {return p +((p === "") ? "" : ",")+ c},"")
       } \n
       exdate: ${(this.exdates).map<string>((i:DateTime): string=>{return toSQL(i) ?? ""}).reduce((p,c): string=> {return p +((p === "") ? "" : ",")+ c},"")} \n
+      transp: ${this.transp} \n
+      status: ${this.status ?? ""} \n
+      recurrenceId: ${this.recurrenceId ? toSQL(this.recurrenceId) : ""} \n
+      sequence: ${this.sequence ?? ""} \n
       `
   }
 
@@ -216,7 +249,10 @@ export class VEvent {
       location: this.location,
       description: this.description,
       allday: this.dtstart.isDate ?? false,
-      transp: this.transp
+      transp: this.transp,
+      status: this.status,
+      recurrenceId: this.recurrenceId,
+      sequence: this.sequence
     } as ICEvent
   }
 
@@ -225,11 +261,29 @@ export class VEvent {
   //2. Do not include start dates that are in EXDATE.
   //3. Build events from the list of start dates, and using the duration in the original event 
   // duration = (DTEND - DTSTART) or (DURATION) or (RDATE if period)
-  expandRecurrence ( range: Interval, includeDTSTART: boolean = false ) : ICEvent[] {
+  // For events with RECURRENCE-ID (exceptions to recurring events), generate only the single occurrence
+  expandRecurrence ( range: Interval, includeDTSTART: boolean = true ) : ICEvent[] {
 
     const events: ICEvent[] = []
 
-    if(this.dtstart === undefined || range.isBefore(this.dtstart)) return events
+    if(this.dtstart === undefined) return events
+
+    // If this is an exception event (has RECURRENCE-ID), return only this single occurrence.
+    // The actual occurrence time is the event's DTSTART (the modified instance),
+    // while RECURRENCE-ID points to the original instance being overridden.
+    if(this.recurrenceId !== undefined) {
+      if(range.contains(this.dtstart)) {
+        const event: ICEvent | null = this.toEvent(this.dtstart)
+        if(event === null) {
+          console.error("VEvent expandRecurrence: exception event could not be created from dtstart")
+        } else {
+          events.push(event)
+        }
+      }
+      return events
+    }
+
+    if(range.isBefore(this.dtstart)) return events
 
     // Add DTSTART into the set
     if(range.contains(this.dtstart) && !this.isExcluded(this.dtstart)) {
@@ -315,5 +369,26 @@ export class VEvent {
 
   private isExcluded(startDateTime: DateTime): boolean {
     return (this.exdates.some((exdate: DateTime) => exdate.valueOf() === startDateTime.valueOf()))
+  }
+
+  // Check if this VEvent is an exception to a recurring event
+  // Exception events have a RECURRENCE-ID and typically no RRULE
+  // They represent modified instances of a recurring event series
+  isException(): boolean {
+    return this.recurrenceId !== undefined
+  }
+
+  // Get the most recent recurrence ID if this is an exception event
+  // Useful for matching with recurring event instances that should be replaced
+  getRecurrenceIdDate(): DateTime | undefined {
+    return this.recurrenceId
+  }
+
+  // Get the sequence number for versioning
+  // Higher sequence numbers indicate newer versions of an event
+  // When multiple instances exist (e.g., one from RRULE expansion and one from exception),
+  // the version with higher SEQUENCE should be used
+  getSequence(): number {
+    return this.sequence ?? 0
   }
 }
