@@ -1,6 +1,6 @@
 {
   "name": "icalendar-events",
-  "version": "1.0.10",
+  "version": "1.1.0",
   "description": "A RFC5545 compliant parser for iCalendar VEVENT with time zone support and accurate recurring events generation.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -33,10 +33,10 @@
   "homepage": "https://github.com/baptiste00001/iCalendarEvents#readme",
   "type": "module",
   "dependencies": {
-    "luxon": "^3.7.1"
+    "luxon": "^3.7.2"
   },
   "devDependencies": {
-    "@types/luxon": "^3.6.2",
+    "@types/luxon": "^3.7.1",
     "@types/node": "^22.14.0",
     "eslint": "^9.31.0",
     "typescript": "^5.8.3"
