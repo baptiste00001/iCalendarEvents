@@ -55,7 +55,7 @@ export class VEvent {
     const lineUC: string = line.toUpperCase()
 
     if(lineUC.startsWith("DESCRIPTION")) {
-        this.description = line.split(":")[1]
+        this.description = line.split("DESCRIPTION:")[1]
         return
     }
   
@@ -71,7 +71,7 @@ export class VEvent {
     }
 
     if(lineUC.startsWith("DURATION")) {
-      this.duration = Duration.fromISO(line.split(":")[1])
+      this.duration = Duration.fromISO(line.split("DURATION:")[1])
     }
   
     if(lineUC.startsWith("DTSTART")) {
@@ -86,22 +86,22 @@ export class VEvent {
     }
   
     if(lineUC.startsWith("SUMMARY")) {
-        this.summary = line.split(":")[1]
+        this.summary = line.split("SUMMARY:")[1]
         return
     }
 
     if(lineUC.startsWith("LOCATION")) {
-      this.location = line.split(":")[1]
+      this.location = line.split("LOCATION:")[1]
       return
   }
 
     if(lineUC.startsWith("STATUS")) {
-        this.status = line.split(":")[1]
+        this.status = line.split("STATUS:")[1]
         return
     }
   
     if(lineUC.startsWith("UID")) {
-        this.uid = line.split(":")[1]
+        this.uid = line.split("UID:")[1]
         return
     }
   
@@ -148,7 +148,7 @@ export class VEvent {
     }
 
     if(lineUC.startsWith("TRANSP")) {
-      this.transp = line.split(":")[1]
+      this.transp = line.split("TRANSP:")[1]
     }
 
     if(lineUC.startsWith("RECURRENCE-ID")) {
@@ -164,7 +164,7 @@ export class VEvent {
 
     if(lineUC.startsWith("SEQUENCE")) {
         try {
-            this.sequence = parseInt(line.split(":")[1], 10)
+            this.sequence = parseInt(line.split("SEQUENCE:")[1], 10)
         } catch (e: any) {
             console.error("VEvent", `Could not parse sequence: ${line}`)
             console.error("VEvent", e)

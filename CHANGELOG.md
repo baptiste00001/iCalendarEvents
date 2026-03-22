@@ -1,4 +1,4 @@
-1.1.0 changes (March 2026): 
+1.1.1 changes (March 2026): 
  - RECURRENCE-ID override with SEQUENCE handling has been implemented
  - Updated the README with more usage example
  - Added a quick guide to wrap the library into a CLI tool.

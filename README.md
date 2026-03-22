@@ -12,7 +12,7 @@ Please let me know if there are use cases where VTIMEZONE parsing is required.
 
 Any feedback through GitHub - bug report, pull request, code styling and design patterns suggestions - is highly welcome.
 
-1.1.0 changes (March 2026): 
+1.1.1 changes (March 2026): 
  - RECURRENCE-ID override with SEQUENCE handling has been implemented
  - Updated the README with more usage example
  - Added a quick guide to wrap the library into a CLI tool.
