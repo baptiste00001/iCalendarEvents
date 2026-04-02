@@ -19,6 +19,37 @@ Any feedback through GitHub - bug report, pull request, code styling and design 
  - Added a quick guide to create a openclaw skill to call the library using the CLI tool.
 
 
+## Documentation
+The ICalendarEvents constructor must get the following arguments:
+
+```typescript
+data: string,
+dateRange?: Interval, 
+options?: iCalParserOptions
+```
+
+`data` is the raw ics feed in text format
+
+`dateRange` is a luxon Interval. 
+default is [start of current month - 1 year later]
+
+`options` is an object that defines the results you want to get. All fields are optional.
+
+options.withEvents?: boolean
+default is false to keep memory usage low.
+If true the parser will also populate the parsed raw vevent objects. For debugging purpose moslty.
+
+options.includeDTSTART?: boolean
+default is true
+If true, dtstart will be included in recurrence rule expansion regardless if it satisfied the rule or not.
+If false, it will be included in the expanded set only if it satisfied the recurrence rule.
+
+options.localTZ?: string
+e.g. Asia/Tokyo
+Is used instead of the local time zone on the server in the case where a VEVENT date is defined in the local timezone (no time zone defined and no 'Z'). DTSTART:20261220T150000
+It is mostly to force the user's local time zone instead of the server's local time zone.
+It depends on your use case but it should be rarely used.
+
 ## Usage
 
 ### Use the library in an existing project
@@ -254,21 +285,23 @@ ALL EVENTS INCLUDING RRULE EXPANSIONS
 
 ```
 
-### How to get the icalendar (ics) raw feed in text format
+### How to fetch the icalendar (ics) raw feed from a url or read it from a file before calling the library
+
 You can fetch the icalendar (.ics) feed using this code for example:
+
 ```javascript
 import { readFile } from 'fs/promises';
 import path from 'path';
 
 // ...
 
-let icsContent;
+let data;
 if (params.source.startsWith('http://') || params.source.startsWith('https://')) {
   const res = await fetch(params.source);
   if (!res.ok) {
     throw new Error(`Failed to fetch ICS: HTTP ${res.status}`);
   }
-  icsContent = await res.text();
+  data = await res.text();
 } else {
   let filePath = params.source;
   if (filePath.startsWith('~')) {
@@ -278,52 +311,20 @@ if (params.source.startsWith('http://') || params.source.startsWith('https://'))
   if (!safePath.startsWith(process.env.HOME || '/home/pi')) {
     throw new Error('Access restricted to home directory');
   }
-  icsContent = await readFile(safePath, 'utf-8');
+  data = await readFile(safePath, 'utf-8');
 }
 
-// ...
+// ... build the date range as shown in the previous examples
 
 // Then call the library like before
 
 const iCalendarEvents = new ICalendarEvents(data, range, {withVEvent: true, includeDTSTART: false})
 
-// ...
+// ... process the events in iCalendarEvents.vevents and iCalendarEvents.events as needed 
 
 ```
 
-### Documentation
-The ICalendarEvents constructor must get the following arguments:
-
-```typescript
-data: string,
-dateRange?: Interval, 
-options?: iCalParserOptions
-```
-
-`data` is the raw ics feed in text format
-
-`dateRange` is a luxon Interval. 
-default is [start of current month - 1 year later]
-
-`options` is an object that defines the results you want to get. All fields are optional.
-
-options.withEvents?: boolean
-default is false to keep memory usage low.
-If true the parser will also populate the parsed raw vevent objects. For debugging purpose moslty.
-
-options.includeDTSTART?: boolean
-default is true
-If true, dtstart will be included in recurrence rule expansion regardless if it satisfied the rule or not.
-If false, it will be included in the expanded set only if it satisfied the recurrence rule.
-
-options.localTZ?: string
-e.g. Asia/Tokyo
-Is used instead of the local time zone on the server in the case where a VEVENT date is defined in the local timezone (no time zone defined and no 'Z'). DTSTART:20261220T150000
-It is mostly to force the user's local time zone instead of the server's local time zone.
-It depends on your use case but it should be rarely used.
-
-
-### Wrap the library to turn it into a CLI command
+## How to wrap the library to turn it into a CLI command
 First you must make sure you have a node_module with the needed libraries in the same folder as your wrapper.
 
 Terminal
@@ -477,31 +478,56 @@ Terminal
 chmod +x main.js
 ```
 
-You can then call the command like this: 
-Terminal
+You can then call the command like this in the terminal:
+
 ```bash
 echo '{"params":{"source":"https://calendar.google.com/calendar/ical/your-gmail-address/public/basic.ics","start":"2026-03-16","end":"2026-04-15","timeZone":"Asia/Tokyo"}}' | ./main.js
 ```
 
-<B>Troubleshooting:</b>
+### Troubleshooting
 
 Make sure main.js is executable.
 Make sure node is in the user PATH.
 Otherwise you must give the full path to node and call it like this:
 
-Terminal
 ```bash
 echo '{"params":{"source":"https://calendar.google.com/calendar/ical/your-gmail-address/public/basic.ics","start":"2026-03-16","end":"2026-04-15","timeZone":"Asia/Tokyo"}}' | /usr/bin/node ./main.js
 ```
 
-### How to create a skill to make the agent call the library when asked to parse ics feed in Openclaw
+## How to use the library as a skill in openclaw to make the agent parse ics feeds
 
-This is one example of how you can create a skill. Depending on your setup and use case you might need to give the agent access to part of the file system and/or to the network.
-Ajust paths and content to fit your setup.
+### Install the skill with clawhub
+
+In your agent's workspace skills folder
+```bash
+cd ~/.openclaw/workspace/skills # or wherever your agent's skills are located
+npx clawhub@latest install icalendar-events-parser
+```
+
+This skill requires a few Node.js dependencies (`icalendar-events` and `luxon`).
+
+**One-time setup** (run this in the terminal after the skill is installed):
+
+```bash
+cd ~/.openclaw/workspace/skills/icalendar-events-parser # adjust path if needed
+npm install
+```
+
+Then, the entry point being a CLI, you need to make it executable:
+
+In the terminal, run:
+```bash
+chmod +x index.js
+```
+
+### Create the skill manually
+
+If you don't want to use clawhub, you can create the skill manually. This is one example of how you can create a skill. Depending on your setup and use case you might need to give the agent access to part of the file system and/or to the network.
+Adjust paths and content to fit your setup.
 
 Terminal
 ```bash
-mkdir -p ~/.openclaw/workspace/skills/icalendar-events-parser
+mkdir -p ~/.openclaw/workspace/skills/icalendar-events-parser # adjust path if needed
 cd ~/.openclaw/workspace/skills/icalendar-events-parser
 npm init -y esnext
 npm install icalendar-events luxon
@@ -516,6 +542,7 @@ import { ICalendarEvents } from 'icalendar-events';
 import { DateTime, Interval } from 'luxon';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { homedir } from 'os';
 
 // ── Extract the core logic into an exported function ────────────────────────
 export async function processICalEvents(params) {
@@ -533,14 +560,51 @@ export async function processICalEvents(params) {
       }
       icsContent = await res.text();
     } else {
-      let filePath = params.source;
+      let filePath = params.source.trim();
+
+      // 1. Effective home (respects OPENCLAW_HOME)
+      const effectiveHome = process.env.OPENCLAW_HOME 
+        || process.env.HOME 
+        || homedir() 
+        || '/home/pi';
+
+      // 2. Expand ~
       if (filePath.startsWith('~')) {
-        filePath = path.join(process.env.HOME || '/home/pi', filePath.slice(1));
+        filePath = path.join(effectiveHome, filePath.slice(1));
       }
+
       const safePath = path.resolve(filePath);
-      if (!safePath.startsWith(process.env.HOME || '/home/pi')) {
-        throw new Error('Access restricted to home directory');
+
+      // 3. Determine workspace (supports default + named profiles)
+      let workspaceDir = process.env.OPENCLAW_WORKSPACE;
+      if (!workspaceDir) {
+        const profile = process.env.OPENCLAW_PROFILE || 'default';
+        const base = path.join(effectiveHome, '.openclaw');
+        workspaceDir = profile === 'default' 
+          ? path.join(base, 'workspace')
+          : path.join(base, `workspace-${profile}`);
       }
+
+      // 4. Allowed paths
+      const allowedBasePaths = [
+        workspaceDir,
+        path.resolve('.')   // skill folder itself
+      ];
+
+      const isAllowed = allowedBasePaths.some(base => 
+        safePath === base || safePath.startsWith(base + path.sep)
+      );
+
+      if (!isAllowed) {
+        throw new Error(
+          `Access restricted by iCalendar Events Parser.\n\n` +
+          `This skill can only read files from:\n` +
+          `• ${workspaceDir} (your current workspace)\n` +
+          `• The skill's own folder\n\n` +
+          `Example: "~/openclaw/workspace/my-calendar.ics" or "./my-calendar.ics"`
+        );
+      }
+
       icsContent = await readFile(safePath, 'utf-8');
     }
 
@@ -655,26 +719,31 @@ Then create the SKILL.md file to tell the agent how to use the library:
 ---
 name: icalendar-events-parser
 description: Parse .ics / iCalendar files or URLs, expand recurring events (RRULE), filter by date range / keywords, and return clean list of events. Use this instead of manual parsing or other ical libraries when reliable recurrence expansion is needed.
-version: 1.0.0
+version: 1.0.2
+homepage: https://github.com/baptiste00001/icalendar-events-parser
 tags: icalendar, ics, ical, parser
 user-invocable: true
 disable-model-invocation: false
 triggers: ["parse calendar feed", "parse ics"]
 metadata:
-  openclaw:
+  clawdbot:
     entrypoint: index.js
     runner: node
     format: json
     type: cli
+    requires:
+      bins: ["node"]
+      env: []
     permissions:
       version: 1
-      declared_purpose: "Download remote .ics feeds via HTTP and parse remote or local .ics calendar files."
+      declared_purpose: "Safely parse .ics files or remote URLs provided by the user. Only reads from the current OpenClaw workspace (including named workspaces) and the skill's own folder. No access to system files, credentials, or unrelated directories."
       exec:
         - node
       network:
         - "*"
       filesystem:
-        - "read:~/**"
+        - "read:~/.openclaw/workspace/**"
+        - "read:~/.openclaw/workspace-*/**"
         - "read:./**"
       env: []
       sensitive_data:
@@ -694,6 +763,24 @@ Do NOT try to parse iCalendar .ics feeds yourself in prompts — always call thi
 Do NOT use the built in web_fetch tool - always call this tool.
 For several urls, call this tool several times.
 
+## How to set up
+
+This skill requires a few Node.js dependencies (`icalendar-events` and `luxon`).
+
+**One-time setup** (run this in the terminal after the skill is installed):
+
+```bash
+cd ~/.openclaw/workspace/skills/icalendar-events-parser # adjust path if needed
+npm install
+```
+
+Then, the entry point being a CLI, you need to make it executable:
+
+In the terminal, run:
+```bash
+chmod +x index.js
+```
+
 ## How the agent should call it (JSON format)
 
 Send a JSON object like this to stdin (the script reads and processes it automatically):
@@ -703,11 +790,11 @@ Send a JSON object like this to stdin (the script reads and processes it automat
   "tool": "icalendar-events-parser",
   "action": "parse-expand-filter",
   "params": {
-    "source": "https://calendar.google.com/calendar/ical/.../basic.ics",   // or "~/data/my-calendar.ics" or "./data/my-calendar.ics"
+    "source": "https://calendar.google.com/calendar/ical/.../basic.ics",   // or "~/openclaw/workspace/my-calendar.ics" or "./data/my-calendar.ics"
     "start": "2026-03-01",                    // YYYY-MM-DD date format
     "end":   "2026-03-31",                    // YYYY-MM-DD date format
     "timeZone": "Asia/Tokyo",                 // ALWAYS USE THE USER'S ACTUAL TIME ZONE
-    "maxInstancesPerSeries": 200,             // safety limit to prevent huge exansions
+    "maxInstancesPerSeries": 200,             // safety limit to prevent huge expansions
     "filter": {                               // optional - all fields optional
       "titleContains": "yoga",
       "descriptionContains": null,
@@ -762,7 +849,7 @@ Your skill folder should look like this
 - package.json
 - package-lock.json
 
-<b>Troubleshooting</b>
+### Troubleshooting
 
 Did you make the file executable?
 
@@ -786,3 +873,12 @@ If the agent complains that it cannot find node or the CLI command fails it migh
 From my experience when using openclaw it is better to install node globally in the expected location (/usr/bin/ on linux) and not use nvm. 
 
 Uninstalling everything then reinstalling openclaw cleanly using the insltall script fixes the issues in some cases
+
+### How to ask the agent to parse an ics feed using the skill
+
+You can ask the agent with sentences like:
+- "Parse this calendar feed: [URL or local path]"
+- "List all events from this .ics file: [URL or local path]"
+- "Show me all events in this calendar that mention 'meeting' in the title"
+- "Expand recurring events in this calendar and list all instances"
+- "Filter events in this calendar that occur between [start date] and [end date]"
