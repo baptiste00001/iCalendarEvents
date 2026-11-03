@@ -84,44 +84,53 @@ export class ICalendarEvents {
       }
     })
     
-    // Second pass: expand masters and apply overrides
-    masterEvents.forEach((vevent) => {
-      // Expand the master event's recurrence
-      let expandedEvents: ICEvent[] = vevent.expandRecurrence(range, options?.includeDTSTART)
-      
-      // Apply any overrides for this event's UID
-      const uid = vevent.uid ?? 'no-uid'
-      const overrides = overrideEvents.get(uid) ?? []
-      
-      // For each override, find and replace matching occurrences
-      overrides.forEach((override) => {
-        const recurrenceId = override.getRecurrenceIdDate()
-        if(recurrenceId) {
-          // Find the matching occurrence in expandedEvents
-          const matchIndex = expandedEvents.findIndex(
-            event => event.dtstart.valueOf() === recurrenceId.valueOf()
-          )
-          
-          if(matchIndex !== -1) {
-            // If this override is canceled, remove the occurrence
-            if(override.status?.toUpperCase() === 'CANCELLED') {
-              expandedEvents.splice(matchIndex, 1)
-              return
-            }
+    // Keep only the latest version of each modified occurrence:
+    // highest SEQUENCE, and the last one in the feed when SEQUENCE is equal.
+    const latestOverrides: Map<string, Map<number, VEvent>> = new Map() // UID -> original start (ms) -> override
+    overrideEvents.forEach((overrides, uid) => {
+      const byRecurrenceId: Map<number, VEvent> = new Map()
+      for(const override of overrides) {
+        const key = override.getRecurrenceIdDate()!.valueOf()
+        const current = byRecurrenceId.get(key)
+        if(!current || override.getSequence() >= current.getSequence()) byRecurrenceId.set(key, override)
+      }
+      latestOverrides.set(uid, byRecurrenceId)
+    })
 
-            // Check if override has higher sequence number
-            if(override.getSequence() >= vevent.getSequence()) {
-              // Replace with override's event
-              const overrideExpandedEvents = override.expandRecurrence(range, options?.includeDTSTART)
-              if(overrideExpandedEvents.length > 0) {
-                expandedEvents[matchIndex] = overrideExpandedEvents[0]
-              }
-            }
-          }
-        }
+    const isCancelled = (vevent: VEvent): boolean => vevent.status?.toUpperCase() === 'CANCELLED'
+
+    // Second pass: expand masters and apply overrides.
+    // The original start (RECURRENCE-ID) and the new start (DTSTART) of a modified occurrence
+    // can be on either side of the range, so they are handled independently:
+    // - the original occurrence is removed whenever the series generates it in the range,
+    // - the modified occurrence is added whenever its new start is in the range.
+    const uidsWithMaster: Set<string> = new Set()
+    masterEvents.forEach((vevent) => {
+      const uid = vevent.uid ?? 'no-uid'
+      uidsWithMaster.add(uid)
+      const overrides: VEvent[] = Array.from(latestOverrides.get(uid)?.values() ?? [])
+
+      // SEQUENCE versions each component (UID + RECURRENCE-ID) independently (RFC 5545 3.8.7.4),
+      // so an override is not compared with its series: a lower SEQUENCE than the series still applies.
+      const replacedStarts: Set<number> = new Set(overrides.map(override => override.getRecurrenceIdDate()!.valueOf()))
+
+      const occurrences: ICEvent[] = vevent.expandRecurrence(range, options?.includeDTSTART)
+        .filter(event => !replacedStarts.has(event.dtstart.valueOf()))
+
+      for(const override of overrides) {
+        if(!isCancelled(override)) occurrences.push(...override.expandRecurrence(range, options?.includeDTSTART))
+      }
+
+      this.events.push(...occurrences)
+    })
+
+    // Modified occurrences whose series is not in the feed (e.g. an invitation to a single
+    // occurrence of a recurring meeting) are kept as standalone events.
+    latestOverrides.forEach((overrides, uid) => {
+      if(uidsWithMaster.has(uid)) return
+      overrides.forEach((override) => {
+        if(!isCancelled(override)) this.events.push(...override.expandRecurrence(range, options?.includeDTSTART))
       })
-      
-      this.events.push(...expandedEvents)
     })
 
     this.vevents.sort((vevent1, vevent2) => {

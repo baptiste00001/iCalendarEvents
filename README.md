@@ -18,6 +18,10 @@ Any feedback through GitHub - bug report, pull request, code styling and design 
  - Added a quick guide to wrap the library into a CLI tool.
  - Added a quick guide to create a openclaw skill to call the library using the CLI tool.
 
+Unreleased changes:
+ - Modified occurrences (RECURRENCE-ID) are applied whatever the requested range: the original occurrence is removed when its original start is in the range, and the modified occurrence is returned when its new start is in the range. When several versions of the same occurrence (same UID and RECURRENCE-ID) are present, the one with the highest SEQUENCE is used. SEQUENCE is not compared with the series: each component is versioned independently (RFC 5545), so a modification or cancellation (STATUS:CANCELLED) with a lower SEQUENCE than its series still applies. Modified occurrences without their series in the feed are returned as standalone events.
+ - RRULE COUNT bounds the whole recurrence set, including occurrences before the range and occurrences removed by EXDATE.
+
 
 ## Documentation
 The ICalendarEvents constructor must get the following arguments:
