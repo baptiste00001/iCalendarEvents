@@ -299,28 +299,22 @@ export class VEvent {
     }
 
     if(this.rrule !== undefined) {
-      let currentDateTime: DateTime = this.dtstart
-
-      // Advance until next date in the range
-      range.isAfter
-      try {
-        do {
-          currentDateTime = this.rrule.advanceDate(currentDateTime)
-          if(range.isBefore(currentDateTime)) return events
-        } while(!range.contains(currentDateTime))
-      } catch(e: any) {
-        console.error(`VEvent expandRecurrence: could not advance date:`)
-        console.error(e)
-        return events
-      }
-
       const until: DateTime | null = this.rrule.until
       const count: number | null = this.rrule.count
 
-      // Loop to find all recurrences
-      while ((until === null || currentDateTime <= until) && (count === null || events.length < count) && range.contains(currentDateTime)) {
-        if (!this.isExcluded(currentDateTime)) {
-          if (this.rrule.matchesRRule(currentDateTime)) {
+      // COUNT bounds the whole recurrence set, not the occurrences in the range: DTSTART counts as the
+      // first occurrence when it is in the set, and occurrences before the range or removed by EXDATE count too.
+      let generated: number = (includeDTSTART || this.rrule.matchesRRule(this.dtstart)) ? 1 : 0
+      let currentDateTime: DateTime = this.dtstart
+
+      try {
+        while(count === null || generated < count) {
+          currentDateTime = this.rrule.advanceDate(currentDateTime)
+          if(range.isBefore(currentDateTime) || (until !== null && currentDateTime > until)) break
+          if(!this.rrule.matchesRRule(currentDateTime)) continue
+
+          generated++
+          if(range.contains(currentDateTime) && !this.isExcluded(currentDateTime)) {
             const event: ICEvent | null = this.toEvent(currentDateTime)
             if(event === null) {
               console.error("VEvent expandRecurrence: event could not be created from new start date")
@@ -329,13 +323,9 @@ export class VEvent {
             }
           }
         }
-        try {
-          currentDateTime = this.rrule.advanceDate(currentDateTime)
-        } catch(e: any) {
-          console.error(`VEvent expandRecurrence: could not advance date:`)
-          console.error(e)
-          break
-        }
+      } catch(e: any) {
+        console.error(`VEvent expandRecurrence: could not advance date:`)
+        console.error(e)
       }
     }
 
