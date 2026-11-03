@@ -1,4 +1,4 @@
-Unreleased:
+1.2.0 changes (November 2026) by Claude Opus 5.5: 
  - Fix modified occurrences (RECURRENCE-ID) when the original and the new start are not both in the requested range: a moved occurrence was missing from a range containing only its new start, and the original occurrence was still returned in a range containing only its original start.
  - Use the modified version with the highest SEQUENCE regardless of its position in the feed.
  - Apply modified occurrences whose SEQUENCE is lower than the SEQUENCE of their series: each component is versioned independently (RFC 5545), and some exports (e.g. Evolution) keep the series SEQUENCE higher.
