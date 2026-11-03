@@ -47,9 +47,12 @@ describe('modified occurrences (RECURRENCE-ID)', () => {
     assert.deepEqual(starts(series() + cancelled, november), ['02/11 09:00', '16/11 09:00'])
   })
 
-  it('ignores a modification older than the series', () => {
-    assert.deepEqual(starts(series(3) + movedToNextDay, day('2026-11-09')), ['09/11 09:00'])
-    assert.deepEqual(starts(series(3) + movedToNextDay, day('2026-11-10')), [])
+  it('applies a modification with a lower SEQUENCE than its series', () => {
+    // Evolution exports keep the series SEQUENCE above the SEQUENCE of its modified occurrences
+    assert.deepEqual(starts(series(4) + movedToNextDay, day('2026-11-09')), [])
+    assert.deepEqual(starts(series(4) + movedToNextDay, day('2026-11-10')), ['10/11 09:00'])
+    const cancelled = override(1, '20261109T090000Z', '20261109T100000Z', ['STATUS:CANCELLED'])
+    assert.deepEqual(starts(series(4) + cancelled, november), ['02/11 09:00', '16/11 09:00'])
   })
 
   it('keeps a modified occurrence whose series is not in the feed', () => {

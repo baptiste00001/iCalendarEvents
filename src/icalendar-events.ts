@@ -110,14 +110,14 @@ export class ICalendarEvents {
       uidsWithMaster.add(uid)
       const overrides: VEvent[] = Array.from(latestOverrides.get(uid)?.values() ?? [])
 
-      // A cancellation always applies. A modification applies if it is not older than the series.
-      const replacing: VEvent[] = overrides.filter(override => isCancelled(override) || override.getSequence() >= vevent.getSequence())
-      const replacedStarts: Set<number> = new Set(replacing.map(override => override.getRecurrenceIdDate()!.valueOf()))
+      // SEQUENCE versions each component (UID + RECURRENCE-ID) independently (RFC 5545 3.8.7.4),
+      // so an override is not compared with its series: a lower SEQUENCE than the series still applies.
+      const replacedStarts: Set<number> = new Set(overrides.map(override => override.getRecurrenceIdDate()!.valueOf()))
 
       const occurrences: ICEvent[] = vevent.expandRecurrence(range, options?.includeDTSTART)
         .filter(event => !replacedStarts.has(event.dtstart.valueOf()))
 
-      for(const override of replacing) {
+      for(const override of overrides) {
         if(!isCancelled(override)) occurrences.push(...override.expandRecurrence(range, options?.includeDTSTART))
       }
 
