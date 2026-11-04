@@ -19,7 +19,7 @@ export type iCalParserOptions = {
 
 
 export class ICalendarEvents {
-  // All Events in the given date range sorted, with reccurence expanded
+  // All events overlapping the given date range, sorted, with recurrence expanded
   events: ICEvent[]
 
   // Optional raw list of vevents sorted. For debugging purpose mostly.
@@ -100,10 +100,10 @@ export class ICalendarEvents {
     const isCancelled = (vevent: VEvent): boolean => vevent.status?.toUpperCase() === 'CANCELLED'
 
     // Second pass: expand masters and apply overrides.
-    // The original start (RECURRENCE-ID) and the new start (DTSTART) of a modified occurrence
+    // The original time (RECURRENCE-ID) and the new time (DTSTART) of a modified occurrence
     // can be on either side of the range, so they are handled independently:
     // - the original occurrence is removed whenever the series generates it in the range,
-    // - the modified occurrence is added whenever its new start is in the range.
+    // - the modified occurrence is added whenever its new time overlaps the range.
     const uidsWithMaster: Set<string> = new Set()
     masterEvents.forEach((vevent) => {
       const uid = vevent.uid ?? 'no-uid'
