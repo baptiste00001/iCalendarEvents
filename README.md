@@ -48,6 +48,11 @@ default is true
 If true, dtstart will be included in recurrence rule expansion regardless if it satisfied the rule or not.
 If false, it will be included in the expanded set only if it satisfied the recurrence rule.
 
+options.rangeMode?: 'start' | 'overlap'
+default is 'start'
+'start': returns the occurrences that start in `dateRange`.
+'overlap': returns the occurrences that overlap `dateRange`, including the ones that started before it and are still running (e.g. to find what makes a time slot busy). It follows the CalDAV time-range rule (RFC 4791 9.9): an occurrence is returned if it starts before the end of the range and ends after its start. An occurrence without duration is an instant, returned when it is in the range.
+
 options.localTZ?: string
 e.g. Asia/Tokyo
 Is used instead of the local time zone on the server in the case where a VEVENT date is defined in the local timezone (no time zone defined and no 'Z'). DTSTART:20261220T150000

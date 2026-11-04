@@ -1,3 +1,7 @@
+1.3.0 changes (November 2026) by Claude Opus 5.5:
+ - Add the `rangeMode` option. `'overlap'` returns the occurrences that overlap the requested range, including those that started before it (RFC 4791 9.9 time-range rule); occurrences without duration are instants. The default `'start'` keeps returning the occurrences that start in the range.
+ - `VEvent.expandRecurrence` takes the same mode as an optional third argument, and the `RangeMode` type is exported.
+
 1.2.0 changes (November 2026) by Claude Opus 5.5: 
  - Fix modified occurrences (RECURRENCE-ID) when the original and the new start are not both in the requested range: a moved occurrence was missing from a range containing only its new start, and the original occurrence was still returned in a range containing only its original start.
  - Use the modified version with the highest SEQUENCE regardless of its position in the feed.

@@ -5,6 +5,8 @@ import { parseICalPeriod } from './parse-ical-period.js'
 import { ICEvent } from './icevent.js'
 import { toSQL } from './utils.js'
 
+export type RangeMode = 'start' | 'overlap'
+
 
 export class VEvent {
   uid?: string
@@ -206,6 +208,28 @@ export class VEvent {
   private toEvent(newStartDate: DateTime, period?: Duration | null): ICEvent | null {
     if(this.dtstart === undefined) return null
 
+    const endDate: DateTime | null = this.occurrenceEnd(newStartDate, period)
+    if(endDate === null) return null
+
+    return  {
+      uid: this.uid,
+      dtstart: newStartDate,
+      dtend: endDate,
+      summary: this.summary,
+      location: this.location,
+      description: this.description,
+      allday: this.dtstart.isDate ?? false,
+      transp: this.transp,
+      status: this.status,
+      recurrenceId: this.recurrenceId,
+      sequence: this.sequence
+    } as ICEvent
+  }
+
+  // End of the occurrence starting at newStartDate
+  private occurrenceEnd(newStartDate: DateTime, period?: Duration | null): DateTime | null {
+    if(this.dtstart === undefined) return null
+
     let endDate: DateTime | null = null
     if(period !== undefined && period !== null) {
       endDate = newStartDate.plus(period)
@@ -240,20 +264,19 @@ export class VEvent {
     if(endDate === null || !endDate.isValid) return null
 
     endDate.isDate = this.dtstart.isDate
-    
-    return  {
-      uid: this.uid,
-      dtstart: newStartDate,
-      dtend: endDate,
-      summary: this.summary,
-      location: this.location,
-      description: this.description,
-      allday: this.dtstart.isDate ?? false,
-      transp: this.transp,
-      status: this.status,
-      recurrenceId: this.recurrenceId,
-      sequence: this.sequence
-    } as ICEvent
+
+    return endDate
+  }
+
+  // Whether the occurrence starting at startDate is selected by the range:
+  // - 'start': the occurrence starts in the range,
+  // - 'overlap': the occurrence overlaps the range (RFC 4791 9.9). An occurrence without duration
+  //   is an instant, selected when it is in the range.
+  private isInRange(range: Interval, startDate: DateTime, rangeMode: RangeMode, period?: Duration | null): boolean {
+    if(range.contains(startDate)) return true
+    if(rangeMode === 'start' || startDate >= range.end!) return false
+    const endDate: DateTime | null = this.occurrenceEnd(startDate, period)
+    return endDate !== null && endDate > range.start!
   }
 
   // Method to expand recurrence rules and generate all event occurrences
@@ -262,7 +285,8 @@ export class VEvent {
   //3. Build events from the list of start dates, and using the duration in the original event 
   // duration = (DTEND - DTSTART) or (DURATION) or (RDATE if period)
   // For events with RECURRENCE-ID (exceptions to recurring events), generate only the single occurrence
-  expandRecurrence ( range: Interval, includeDTSTART: boolean = true ) : ICEvent[] {
+  // rangeMode selects the occurrences that start in the range ('start') or that overlap it ('overlap')
+  expandRecurrence ( range: Interval, includeDTSTART: boolean = true, rangeMode: RangeMode = 'start' ) : ICEvent[] {
 
     const events: ICEvent[] = []
 
@@ -272,7 +296,7 @@ export class VEvent {
     // The actual occurrence time is the event's DTSTART (the modified instance),
     // while RECURRENCE-ID points to the original instance being overridden.
     if(this.recurrenceId !== undefined) {
-      if(range.contains(this.dtstart)) {
+      if(this.isInRange(range, this.dtstart, rangeMode)) {
         const event: ICEvent | null = this.toEvent(this.dtstart)
         if(event === null) {
           console.error("VEvent expandRecurrence: exception event could not be created from dtstart")
@@ -286,7 +310,7 @@ export class VEvent {
     if(range.isBefore(this.dtstart)) return events
 
     // Add DTSTART into the set
-    if(range.contains(this.dtstart) && !this.isExcluded(this.dtstart)) {
+    if(this.isInRange(range, this.dtstart, rangeMode) && !this.isExcluded(this.dtstart)) {
       if (includeDTSTART || !this.rrule || this.rrule.matchesRRule(this.dtstart)) {
         const event: ICEvent | null = this.toEvent(this.dtstart)
         
@@ -314,7 +338,7 @@ export class VEvent {
           if(!this.rrule.matchesRRule(currentDateTime)) continue
 
           generated++
-          if(range.contains(currentDateTime) && !this.isExcluded(currentDateTime)) {
+          if(this.isInRange(range, currentDateTime, rangeMode) && !this.isExcluded(currentDateTime)) {
             const event: ICEvent | null = this.toEvent(currentDateTime)
             if(event === null) {
               console.error("VEvent expandRecurrence: event could not be created from new start date")
@@ -338,11 +362,10 @@ export class VEvent {
         return
       }
 
-      if(!range.contains(rdateStartDate)) return
+      const duration: Duration | null = (rdate instanceof Interval) ? rdate.toDuration() : null
+      if(!this.isInRange(range, rdateStartDate, rangeMode, duration)) return
 
       if (!this.isExcluded(rdateStartDate)) {
-        const duration: Duration | null = (rdate instanceof Interval) ? rdate.toDuration() : null
-
         const event: ICEvent | null = this.toEvent(rdateStartDate, duration)
         if(event === null) {
           console.error("expandRecurrence: event could not be created from RDATE")
