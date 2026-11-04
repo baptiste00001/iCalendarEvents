@@ -1,6 +1,6 @@
 import { type ICEvent}  from './icevent.js'
 import { DateTime, Interval } from 'luxon'
-import { VEvent, type RangeMode } from './vevent.js'
+import { VEvent } from './vevent.js'
 import './luxon-extensions.js'
 
 export type iCalParserOptions = {
@@ -15,16 +15,11 @@ export type iCalParserOptions = {
   // always include DTSTART in the recurrence set even if it does not match RRULE.
   // it can still be excluded by EXDATE.
   includeDTSTART?: boolean,
-
-  // which occurrences of the range are returned:
-  // 'start' (default): occurrences that start in the range,
-  // 'overlap': occurrences that overlap the range, including those that started before it.
-  rangeMode?: RangeMode,
 }
 
 
 export class ICalendarEvents {
-  // All Events in the given date range sorted, with reccurence expanded
+  // All events overlapping the given date range, sorted, with recurrence expanded
   events: ICEvent[]
 
   // Optional raw list of vevents sorted. For debugging purpose mostly.
@@ -48,9 +43,6 @@ export class ICalendarEvents {
     }
 
     if(!range || !range.isValid) throw new Error(`ICalEvents constructor: range is invalid: ${range.invalidReason}`)
-
-    const rangeMode: RangeMode = options?.rangeMode ?? 'start'
-    if(rangeMode !== 'start' && rangeMode !== 'overlap') throw new Error(`ICalEvents constructor: unknown rangeMode: ${rangeMode}`)
 
     this.events = []
 
@@ -108,10 +100,10 @@ export class ICalendarEvents {
     const isCancelled = (vevent: VEvent): boolean => vevent.status?.toUpperCase() === 'CANCELLED'
 
     // Second pass: expand masters and apply overrides.
-    // The original start (RECURRENCE-ID) and the new start (DTSTART) of a modified occurrence
+    // The original time (RECURRENCE-ID) and the new time (DTSTART) of a modified occurrence
     // can be on either side of the range, so they are handled independently:
     // - the original occurrence is removed whenever the series generates it in the range,
-    // - the modified occurrence is added whenever its new time is in the range.
+    // - the modified occurrence is added whenever its new time overlaps the range.
     const uidsWithMaster: Set<string> = new Set()
     masterEvents.forEach((vevent) => {
       const uid = vevent.uid ?? 'no-uid'
@@ -122,11 +114,11 @@ export class ICalendarEvents {
       // so an override is not compared with its series: a lower SEQUENCE than the series still applies.
       const replacedStarts: Set<number> = new Set(overrides.map(override => override.getRecurrenceIdDate()!.valueOf()))
 
-      const occurrences: ICEvent[] = vevent.expandRecurrence(range, options?.includeDTSTART, rangeMode)
+      const occurrences: ICEvent[] = vevent.expandRecurrence(range, options?.includeDTSTART)
         .filter(event => !replacedStarts.has(event.dtstart.valueOf()))
 
       for(const override of overrides) {
-        if(!isCancelled(override)) occurrences.push(...override.expandRecurrence(range, options?.includeDTSTART, rangeMode))
+        if(!isCancelled(override)) occurrences.push(...override.expandRecurrence(range, options?.includeDTSTART))
       }
 
       this.events.push(...occurrences)
@@ -137,7 +129,7 @@ export class ICalendarEvents {
     latestOverrides.forEach((overrides, uid) => {
       if(uidsWithMaster.has(uid)) return
       overrides.forEach((override) => {
-        if(!isCancelled(override)) this.events.push(...override.expandRecurrence(range, options?.includeDTSTART, rangeMode))
+        if(!isCancelled(override)) this.events.push(...override.expandRecurrence(range, options?.includeDTSTART))
       })
     })
 

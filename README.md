@@ -19,7 +19,7 @@ Any feedback through GitHub - bug report, pull request, code styling and design 
  - Added a quick guide to create a openclaw skill to call the library using the CLI tool.
 
 Unreleased changes:
- - Modified occurrences (RECURRENCE-ID) are applied whatever the requested range: the original occurrence is removed when its original start is in the range, and the modified occurrence is returned when its new start is in the range. When several versions of the same occurrence (same UID and RECURRENCE-ID) are present, the one with the highest SEQUENCE is used. SEQUENCE is not compared with the series: each component is versioned independently (RFC 5545), so a modification or cancellation (STATUS:CANCELLED) with a lower SEQUENCE than its series still applies. Modified occurrences without their series in the feed are returned as standalone events.
+ - Modified occurrences (RECURRENCE-ID) are applied whatever the requested range: the original occurrence is removed when it overlaps the range, and the modified occurrence is returned when its new time overlaps the range. When several versions of the same occurrence (same UID and RECURRENCE-ID) are present, the one with the highest SEQUENCE is used. SEQUENCE is not compared with the series: each component is versioned independently (RFC 5545), so a modification or cancellation (STATUS:CANCELLED) with a lower SEQUENCE than its series still applies. Modified occurrences without their series in the feed are returned as standalone events.
  - RRULE COUNT bounds the whole recurrence set, including occurrences before the range and occurrences removed by EXDATE.
 
 
@@ -36,6 +36,7 @@ options?: iCalParserOptions
 
 `dateRange` is a luxon Interval. 
 default is [start of current month - 1 year later]
+The parser returns every occurrence that overlaps `dateRange`, including the ones that started before it and are still running (e.g. an event from 08:00 to 10:00 is returned for a 09:00-17:00 range). It follows the CalDAV time-range rule (RFC 4791 9.9): an occurrence is returned if it starts before the end of the range and ends after its start. An occurrence without duration is an instant, returned when it is in the range.
 
 `options` is an object that defines the results you want to get. All fields are optional.
 
@@ -47,11 +48,6 @@ options.includeDTSTART?: boolean
 default is true
 If true, dtstart will be included in recurrence rule expansion regardless if it satisfied the rule or not.
 If false, it will be included in the expanded set only if it satisfied the recurrence rule.
-
-options.rangeMode?: 'start' | 'overlap'
-default is 'start'
-'start': returns the occurrences that start in `dateRange`.
-'overlap': returns the occurrences that overlap `dateRange`, including the ones that started before it and are still running (e.g. to find what makes a time slot busy). It follows the CalDAV time-range rule (RFC 4791 9.9): an occurrence is returned if it starts before the end of the range and ends after its start. An occurrence without duration is an instant, returned when it is in the range.
 
 options.localTZ?: string
 e.g. Asia/Tokyo
