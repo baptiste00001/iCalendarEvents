@@ -191,7 +191,10 @@ export class RRule {
 
         if(dateTime.setLocale("en-US").weekdayShort?.substring(0,2).toUpperCase() !== day.weekday) continue
 
-        if(day.nth !== null && this.freq === "YEARLY") {
+        // With FREQ=YEARLY and BYMONTH, the offset is from the day number in the month (RFC5545 Note 2)
+        const nthInMonth: boolean = this.freq === "MONTHLY" || (this.freq === "YEARLY" && this.bymonth.length !== 0)
+
+        if(day.nth !== null && this.freq === "YEARLY" && !nthInMonth) {
           let positionInYear: number = 0
           let totalInYear: number = 0
   
@@ -212,7 +215,7 @@ export class RRule {
             bydayMatch = true
             break
           }
-        } else if(day.nth !== null && this.freq === "MONTHLY") {
+        } else if(day.nth !== null && nthInMonth) {
           let positionInMonth: number = 0
           let totalInMonth: number = 0
   
@@ -270,8 +273,9 @@ export class RRule {
       const periodUnit: DateTimeUnit = mapFreqUnit(this.freq)
 
       // Consider WKST with useLocaleWeeks: true
-      const periodStart: DateTime = dateTime.startOf(periodUnit, {useLocaleWeeks: true})
-      const periodEnd: DateTime = dateTime.endOf(periodUnit, {useLocaleWeeks: true})
+      const dateTimeInLocale: DateTime = (periodUnit === "week" ? this.adjustLocaleForWkst(dateTime) : null) ?? dateTime
+      const periodStart: DateTime = dateTimeInLocale.startOf(periodUnit, {useLocaleWeeks: true})
+      const periodEnd: DateTime = dateTimeInLocale.endOf(periodUnit, {useLocaleWeeks: true})
 
       const validDates: string[] = []
 
@@ -372,7 +376,8 @@ export class RRule {
       DAILY: 'hour', 
       WEEKLY: 'hour', 
       MONTHLY: 'hour', 
-      YEARLY: (this.bymonth.length !== 0) ? 'day' : 'hour',
+      // Keep the DTSTART day only when advancing month by month (BYMONTH without BYDAY, BYMONTHDAY...)
+      YEARLY: (this.getAdvanceFreq() === "MONTHLY") ? 'day' : 'hour',
     }
 
     return map[freq]
