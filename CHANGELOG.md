@@ -1,3 +1,6 @@
+1.3.1 changes (November 2026) by Claude Opus 5.5:
+ - Fix RRULE expansion (#3): with `FREQ=YEARLY` and `BYMONTH`, an ordinal `BYDAY` (e.g. `4TH`, `-1MO`) is now counted within the month instead of the year, and January 1-30 are no longer skipped in the following years. `FREQ=WEEKLY` with `BYSETPOS` now uses `WKST` (default `MO`) for the week bounds.
+
 1.3.0 changes (November 2026) by Claude Opus 5.5:
  - The parser and `VEvent.expandRecurrence` now return the occurrences that overlap the requested range, including those that started before it and are still running (RFC 4791 9.9 time-range rule). Previously only the occurrences starting in the range were returned. Occurrences without duration are instants, returned when they are in the range.
 

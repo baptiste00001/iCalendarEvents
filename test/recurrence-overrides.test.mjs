@@ -97,3 +97,24 @@ describe('RRULE COUNT', () => {
     }
   })
 })
+
+describe('RRULE expansion', () => {
+  const dates = (start, rule) => new ICalendarEvents(calendar(vevent(['UID:x', `DTSTART;TZID=America/New_York:${start}`, 'DURATION:PT1H', `RRULE:${rule}`])),
+    Interval.fromDateTimes(DateTime.fromISO('2024-01-01T00:00Z'), DateTime.fromISO('2027-01-01T00:00Z'))).events.map(event => event.dtstart.toISODate())
+
+  it('counts an ordinal BYDAY within the month for FREQ=YEARLY with BYMONTH', () => {
+    assert.deepEqual(dates('20241128T090000', 'FREQ=YEARLY;BYMONTH=11;BYDAY=4TH'), ['2024-11-28', '2025-11-27', '2026-11-26'])
+    assert.deepEqual(dates('20240527T090000', 'FREQ=YEARLY;BYMONTH=5;BYDAY=-1MO'), ['2024-05-27', '2025-05-26', '2026-05-25'])
+  })
+
+  it('does not skip January 1-30 of the following years for FREQ=YEARLY with BYMONTH', () => {
+    assert.deepEqual(dates('20240115T090000', 'FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15'), ['2024-01-15', '2025-01-15', '2026-01-15'])
+    assert.deepEqual(dates('20240702T090000', 'FREQ=YEARLY;BYMONTH=1,7;BYDAY=TU;COUNT=8'),
+      ['2024-07-02', '2024-07-09', '2024-07-16', '2024-07-23', '2024-07-30', '2025-01-07', '2025-01-14', '2025-01-21'])
+  })
+
+  it('applies WKST to the weeks of FREQ=WEEKLY with BYSETPOS', () => {
+    assert.deepEqual(dates('20240714T090000', 'FREQ=WEEKLY;BYDAY=FR,SU;BYSETPOS=2;COUNT=3'), ['2024-07-14', '2024-07-21', '2024-07-28'])
+    assert.deepEqual(dates('20240714T090000', 'FREQ=WEEKLY;BYDAY=FR,SU;BYSETPOS=2;WKST=SU;COUNT=3'), ['2024-07-14', '2024-07-19', '2024-07-26'])
+  })
+})
